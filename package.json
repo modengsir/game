@@ -1,0 +1,27 @@
+{
+  "name": "meow-defense",
+  "version": "0.1.0",
+  "description": "🐱 喵喵防线 · 猫咖保卫战 — 一个用 Vite + TypeScript + PixiJS 打造的轻量 2D 塔防游戏",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [
+    "tower-defense",
+    "game",
+    "pixijs",
+    "typescript",
+    "vite",
+    "2d-game"
+  ],
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "vite": "^5.4.2"
+  },
+  "dependencies": {
+    "pixi.js": "^8.2.6"
+  }
+}
