@@ -17,6 +17,8 @@
 </div>
 
 ---
+##在线即可玩
+https://modengsir.github.io/game/
 
 ## 📑 目录
 
