@@ -14,6 +14,7 @@ export interface UICallbacks {
   onSell: () => void;
   onSetTargeting: (mode: TargetingMode) => void;
   onToggleMute: () => boolean;
+  onToggleEnglishVoice: () => boolean;
   onRestart: () => void;
 }
 
@@ -37,6 +38,7 @@ export class UIManager {
   private speedBtn!: HTMLButtonElement;
   private pauseBtn!: HTMLButtonElement;
   private muteBtn!: HTMLButtonElement;
+  private englishBtn!: HTMLButtonElement;
   private buildBar!: HTMLElement;
   private panel: HTMLElement | null = null;
   private toast!: HTMLElement;
@@ -83,10 +85,14 @@ export class UIManager {
       const muted = this.cb.onToggleMute();
       this.muteBtn.textContent = muted ? '🔇' : '🔊';
     });
+    this.englishBtn = btn('🇺🇸 英语开', () => {
+      const enabled = this.cb.onToggleEnglishVoice();
+      this.englishBtn.textContent = enabled ? '🇺🇸 英语开' : '🇺🇸 英语关';
+    });
     this.startBtn = btn('▶ 开始下一波', () => this.cb.onStartWave());
     this.startBtn.classList.add('primary');
 
-    this.hud.append(this.pauseBtn, this.speedBtn, this.muteBtn, this.startBtn);
+    this.hud.append(this.pauseBtn, this.speedBtn, this.muteBtn, this.englishBtn, this.startBtn);
     this.root.appendChild(this.hud);
   }
 
@@ -223,7 +229,7 @@ export class UIManager {
     const o = el('div', 'md-overlay');
     o.innerHTML =
       `<h1>${win ? '🎉 猫咖守住了！' : '😿 猫粮被偷光了…'}</h1>` +
-      `<p>${win ? '所有波次清空，你是最棒的店长！' : '别灰心，重新布防再来一次～'}</p>`;
+      `<p>${win ? '24 波挑战完成，英语单词也复习了一轮！' : '别灰心，重新布防再来一次～'}</p>`;
     const b = btn(win ? '🔁 再玩一局' : '🔁 重新挑战', () => {
       o.remove();
       this.cb.onRestart();

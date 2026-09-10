@@ -10,7 +10,9 @@ import { Enemy } from '../entities/Enemy';
 import { Tower } from '../entities/Tower';
 import { Projectile } from '../entities/Projectile';
 import { TOWER_MAP } from '../config/towers';
+import { VOCABULARY_MAP } from '../config/vocabulary';
 import { AudioManager } from '../audio/AudioManager';
+import { EnglishVoice } from '../audio/EnglishVoice';
 import { UIManager } from '../ui/UIManager';
 
 /**
@@ -21,6 +23,7 @@ export class Game {
   private app!: Application;
   private bus = new EventBus();
   private audio = new AudioManager();
+  private englishVoice = new EnglishVoice();
   private state!: GameState;
   private grid!: Grid;
   private map!: MapRenderer;
@@ -38,6 +41,7 @@ export class Game {
 
   private selectedTowerType: string | null = null;
   private selectedTower: Tower | null = null;
+  private reinforcedWords = new Set<string>();
   private accumulator = 0;
 
   constructor(private root: HTMLElement, private level: LevelDef) {}
@@ -88,6 +92,7 @@ export class Game {
       onSell: () => this.sellSelected(),
       onSetTargeting: (m) => this.setTargeting(m),
       onToggleMute: () => (this.audio.muted = !this.audio.muted),
+      onToggleEnglishVoice: () => this.englishVoice.toggle(),
       onRestart: () => this.restart(),
     });
 
@@ -211,6 +216,8 @@ export class Game {
     if (this.waves.startNextWave()) {
       this.state.setState('wave');
       this.audio.play('wave');
+      this.englishVoice.resetWave();
+      this.speakWaveWords();
     }
   }
 
@@ -225,6 +232,7 @@ export class Game {
   private spawnEnemy(e: Enemy) {
     this.enemies.push(e);
     this.enemyLayer.addChild(e);
+    if (e.learningWord) this.englishVoice.speakWord(e.learningWord.word);
   }
 
   // ===== 主循环（固定步长） =====
@@ -296,7 +304,59 @@ export class Game {
       this.state.addGold(e.def.reward);
       this.audio.play('kill');
       this.spawnCoin(e.x, e.y, e.def.reward);
+      this.reinforceLearningWord(e);
     }
+  }
+
+  private speakWaveWords() {
+    const words = this.waves.currentLearningWords();
+    words.forEach((word, index) => {
+      window.setTimeout(() => this.englishVoice.speakWord(word, true), index * 900);
+    });
+    if (words.length) {
+      const labels = words
+        .map((word) => VOCABULARY_MAP[word])
+        .filter(Boolean)
+        .map((item) => `${item.word}=${item.meaning}`)
+        .join('  ');
+      this.ui.showToast(`本波单词：${labels}`);
+    }
+  }
+
+  private reinforceLearningWord(e: Enemy) {
+    const item = e.learningWord;
+    if (!item || this.reinforcedWords.has(item.word)) return;
+    this.reinforcedWords.add(item.word);
+    this.englishVoice.speakWord(item.word, true);
+    this.spawnWordHint(e.x, e.y, item.word, item.meaning);
+  }
+
+  private spawnWordHint(x: number, y: number, word: string, meaning: string) {
+    const txt = new Text({
+      text: `${word} = ${meaning}`,
+      style: {
+        fontSize: 16,
+        fill: 0xffffff,
+        fontWeight: 'bold',
+        align: 'center',
+        stroke: { color: 0x2a2622, width: 5 },
+      },
+    });
+    txt.anchor.set(0.5);
+    txt.position.set(x, y - 24);
+    this.enemyLayer.addChild(txt);
+    let life = 1.1;
+    const anim = (ticker: any) => {
+      const d = ticker.deltaMS / 1000;
+      life -= d;
+      txt.y -= 22 * d;
+      txt.alpha = Math.max(0, life / 1.1);
+      if (life <= 0) {
+        this.app.ticker.remove(anim);
+        txt.destroy();
+      }
+    };
+    this.app.ticker.add(anim);
   }
 
   private spawnCoin(x: number, y: number, amount: number) {
@@ -367,6 +427,7 @@ export class Game {
     this.enemies = [];
     this.towers = [];
     this.projectiles = [];
+    this.reinforcedWords.clear();
     this.app.destroy(true, { children: true });
     this.ui.hideTowerPanel();
     // 清空 root 内除 canvas 外的 UI，由重新 init 重建

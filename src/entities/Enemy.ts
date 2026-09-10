@@ -1,5 +1,5 @@
 import { Container, Graphics, Text } from 'pixi.js';
-import type { EnemyDef, Point } from '../core/types';
+import type { EnemyDef, LearningWord, Point } from '../core/types';
 import { PALETTE } from '../config/gameConfig';
 
 let ENEMY_UID = 1;
@@ -13,6 +13,7 @@ export class Enemy extends Container {
   hp: number;
   alive = true;
   reachedEnd = false;
+  learningWord?: LearningWord;
 
   private path: Point[];
   private targetIndex = 1; // 正前往的路径点索引
@@ -24,9 +25,10 @@ export class Enemy extends Container {
   private hpBarFront: Graphics;
   private body: Graphics;
 
-  constructor(def: EnemyDef, path: Point[]) {
+  constructor(def: EnemyDef, path: Point[], learningWord?: LearningWord) {
     super();
     this.def = def;
+    this.learningWord = learningWord;
     this.hp = def.maxHp;
     this.baseSpeed = def.speed;
     this.path = path;
@@ -47,6 +49,22 @@ export class Enemy extends Container {
     });
     face.anchor.set(0.5);
     this.addChild(face);
+
+    if (learningWord) {
+      const wordLabel = new Text({
+        text: learningWord.word,
+        style: {
+          fontSize: 13,
+          fill: 0x1c1a17,
+          fontWeight: 'bold',
+          align: 'center',
+          stroke: { color: 0xffffff, width: 4 },
+        },
+      });
+      wordLabel.anchor.set(0.5);
+      wordLabel.position.set(0, def.size + 16);
+      this.addChild(wordLabel);
+    }
 
     // 血条
     const barW = def.size * 2.2;

@@ -50,6 +50,13 @@ export interface EnemyDef {
   armor?: number;   // 固定减伤
 }
 
+/** 英语学习词条 */
+export interface LearningWord {
+  word: string;
+  meaning: string;
+  group: string;
+}
+
 /** 单波中的一个生成组 */
 export interface WaveSpawn {
   enemyId: string;
@@ -62,6 +69,7 @@ export interface WaveSpawn {
 export interface Wave {
   spawns: WaveSpawn[];
   reward?: number; // 清波奖励
+  learningWords?: string[]; // 本波重点英语单词
 }
 
 /** 关卡（地图 + 波次） */

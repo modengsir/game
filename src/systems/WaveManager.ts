@@ -1,5 +1,6 @@
 import type { LevelDef, Point } from '../core/types';
 import { ENEMY_MAP } from '../config/enemies';
+import { VOCABULARY_MAP } from '../config/vocabulary';
 import { Enemy } from '../entities/Enemy';
 import type { EventBus } from '../core/EventBus';
 
@@ -18,6 +19,7 @@ export class WaveManager {
   private elapsed = 0;
   private spawnCursor = 0;
   private waveActive = false;
+  private wordCursor = 0;
 
   constructor(
     private level: LevelDef,
@@ -66,6 +68,7 @@ export class WaveManager {
     this.timeline.sort((a, b) => a.time - b.time);
     this.elapsed = 0;
     this.spawnCursor = 0;
+    this.wordCursor = 0;
     this.waveActive = true;
     this.bus.emit('waveChanged', {
       current: this.currentWaveNumber,
@@ -83,9 +86,17 @@ export class WaveManager {
     ) {
       const item = this.timeline[this.spawnCursor];
       const def = ENEMY_MAP[item.enemyId];
-      if (def) this.onSpawn(new Enemy(def, this.path));
+      if (def) {
+        const words = this.level.waves[this.waveIndex]?.learningWords ?? [];
+        const word = words.length ? VOCABULARY_MAP[words[this.wordCursor++ % words.length]] : undefined;
+        this.onSpawn(new Enemy(def, this.path, word));
+      }
       this.spawnCursor++;
     }
+  }
+
+  currentLearningWords(): string[] {
+    return this.level.waves[this.waveIndex]?.learningWords ?? [];
   }
 
   /** 当前波清波奖励 */
